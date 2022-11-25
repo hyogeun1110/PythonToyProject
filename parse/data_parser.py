@@ -1,12 +1,8 @@
-try:
-    import pandas as pd
-    import re
-    import string
-    import os
-    import time
-except:
-    print('error : 필요한 라이브러리가 설치되어 있지않음. ')
-    quit()
+import pandas as pd
+import re
+import os
+import time
+
 
 # 데이터 불러오고 컬럼이름 입력받는 코드
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -14,7 +10,7 @@ except:
 # 현재 디렉토리의 csv 파일 확인
 while True:
     csvFilesInDir = [x for x in os.listdir() if x[-3:] == 'csv']
-    print('현재 디렉토리의 csv파일 : ' + ",".join(i for i in csvFilesInDir)+'\n')
+    print('\n현재 디렉토리의 csv파일 : ' + ",".join(i for i in csvFilesInDir)+'\n')
     if len(csvFilesInDir) == 0 :
         print('csv파일이 없습니다')
         while True:
@@ -35,6 +31,7 @@ while True:
             files = list(filesName.split(","))
             break
 
+# 컬럼이름 맞게 입력했는지 체크하는 함수
 def InputAndcheckColName(text):    
     while True :
         errorColunm=[]
@@ -67,15 +64,18 @@ for originFileName in files:
     colNameChangeYN = input('컬럼 이름 변경(y/n) : ')
     if colNameChangeYN == 'y':
         for originColName in list(df.columns):
-            chColName = input('원래 컬럼 이름 : '+colName+', 바꿀 컬럼 이름(공백입력시 pass) : ')
+            chColName = input('원래 컬럼 이름 : '+ originColName +', 바꿀 컬럼 이름(공백입력시 pass) : ')
             if chColName != '':
                 df.rename(columns={originColName:chColName}, inplace=True)
     colunms = list(df.columns)
 
+    # 파서 리스트
     # 주민등록번호 컬럼
     ResidentRegistrationNumberList = list(InputAndcheckColName('주민등록번호 컬럼'))
-    # 특수문자, 공백을 '_'로 치환할 컬럼
-    specialCharacterRemoveList = list(InputAndcheckColName('특수문자 및 공백 치환할 컬럼'))
+    # 특수문자, 공백처리가 필요한 컬럼
+    specialCharacterRemoveList = list(InputAndcheckColName('특수문자 및 공백 처리할 컬럼'))
+    # 특정 문자 기준으로 특정부분 까지 출력할 컬럼
+    splitCharList = list(InputAndcheckColName('특정문자를 기준으로 나눈 컬럼'))
     # 날짜,시간을 원하는 형식으로 바꿀 컬럼
     dateParseList = list(InputAndcheckColName('날짜 컬럼'))
     # 이름을 성 + '씨' 로 바꿀 컬럼
@@ -87,9 +87,10 @@ for originFileName in files:
     # 삭제할 컬럼
     dropColumnList = list(InputAndcheckColName('삭제할 컬럼'))
 
-# 파싱 코드
-# 파서 추가할시 코딩 해야할것 
-# TODO: 컬럼이름 받은 리스트 , 파싱 코드
+# TODO : 컬럼 입력안했는데 완료 라고 출력댐
+
+# 파서 코드
+# 파서 추가할시 코딩 해야할것 - 컬럼이름 받은 리스트 , 파서 코드
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #주민등록번호 컬럼
     if len(ResidentRegistrationNumberList) > 0 :
@@ -115,27 +116,65 @@ for originFileName in files:
     except:
         print('!! 주민등록번호 파싱 실패')
     
-    
-    
     # 특수문자, 공백이 있는 컬럼
     if len(specialCharacterRemoveList) > 0:
+        parserKind = int(input('처리방법(1-특수문자 및 공백 "_"로 치환  2-특수문자 제거) : '))
         print('\n특수문자 및 공백 파싱중.....')
-        pattern_punctuation = re.compile(r'[^\uAC00-\uD7A30a-zA-Z0-9]')
 
-        def specialCharacterRemove(colName):
-            df[colName] = df.apply(lambda x : re.sub('(([^\uAC00-\uD7A30a-zA-Z0-9])\\2{1,})', '_', pattern_punctuation.sub('_', str(x[colName]))) 
-                        if pattern_punctuation.sub('_', str(x[colName])).strip()[-1] != '_' 
-                        else  re.sub('(([^\uAC00-\uD7A30a-zA-Z0-9])\\2{1,})', '_',pattern_punctuation.sub('_', str(x[colName])))[:-1]
+        specialAndEmptyPattern = re.compile(r'[^\uAC00-\uD7A30a-zA-Z0-9]')
+        specialPattern = re.compile(r'[^\uAC00-\uD7A30a-zA-Z0-9\s]')
+
+        # 특수문자 및 공백 치환
+        def specialCharacterReplace(colName):
+            df[colName] = df.apply(lambda x : re.sub('(([^\uAC00-\uD7A30a-zA-Z0-9])\\2{1,})', '_', specialAndEmptyPattern.sub('_', str(x[colName]))) 
+                        if specialAndEmptyPattern.sub('_', str(x[colName])).strip()[-1] != '_' 
+                        else  re.sub('(([^\uAC00-\uD7A30a-zA-Z0-9])\\2{1,})', '_',specialAndEmptyPattern.sub('_', str(x[colName])))[:-1]
                                         , axis=1)
+        
+        # 특수문자 제거
+        def specialCharacterRemove(colName):
+            df[colName] = df.apply(lambda x : specialPattern.sub('', str(x[colName])), axis=1)
+         
         try:
             for colName in specialCharacterRemoveList:
                 try:
-                    specialCharacterRemove(colName)
+                    if parserKind == 1:
+                        specialCharacterReplace(colName)
+                    elif parserKind == 2:
+                        specialCharacterRemove(colName)
                 except:
                     print('!! ' + colName + '-컬럼 파싱 실패..')
             print('완료')
         except:
             print('!! 특수문자 및 공백 파싱 실패')
+
+    # 특정문자 기준으로 나눔
+    if len(splitCharList) > 0:
+        splitStandard = input('해당기준을 정할 특수문자 또는 공백을 입력 : ')
+        splitCount = int(input('나눈 문자열의 N번째 까지 사용(min=1), N 입력 :'))
+        print('\n특정기준으로 나누기 파싱중.....')
+
+        def checkChar(x):
+            try:
+                while True:
+                    if splitStandard != "":
+                        break         
+                return x.split(splitStandard)[:splitCount]
+            except:
+                return 'NULL'
+
+        def splitCharcter(colName) :
+                df[colName] = df.apply(lambda x : checkChar(str(x[colName])), axis=1)
+
+        try:
+            for colName in splitCharList:
+                try:
+                    splitCharcter(colName)
+                except:
+                    print('!! ' + colName + '-컬럼 파싱 실패..')
+            print("완료")
+        except :
+            print('!! 문자열 나누기 실패')
 
     # 이름 컬럼
     if len(fullNameToSurnameList) > 0:
@@ -250,35 +289,36 @@ for originFileName in files:
         except:
             print('!! 주소 파싱 실패')
 
+    # TODO: 에러남 다 NULL로 입력됨 (산본 도서관~.csv)
     # 날짜 컬럼
-    if len(dateParseList) > 0:
-        dateParsePart = input('\n날짜,시간 컬럼에서 표시할 날 또는 시간 : ')
-        print('날짜 컬럼 파싱중.....')
-        dateDic = {'년':0, '월':1, '일':2, '시':3, '분':4}
-        def dateChange(x):
-            try:
-                if len(x.split(" ")) == 1:
-                    dateList = (x.split(" ").split("-")) 
-                else :
-                    dateList = (x.split(" ")[0].split("-")) + (x.split(" ")[1].split(":"))
-                if len(dateParsePart) == 1:
-                    return dateList[dateDic[dateParsePart]]
-                return '_'.join(i for i in dateList[dateDic[dateParsePart[0]]:dateDic[dateParsePart[-1]]+1])
-            except:
-                return 'NULL'
+    # if len(dateParseList) > 0:
+    #     dateParsePart = input('\n날짜,시간 컬럼에서 표시할 날 또는 시간 : ')
+    #     print('날짜 컬럼 파싱중.....')
+    #     dateDic = {'년':0, '월':1, '일':2, '시':3, '분':4}
+    #     def dateChange(x):
+    #         try:
+    #             if len(x.split(" ")) == 1:
+    #                 dateList = (x.split(" ").split("-")) 
+    #             else :
+    #                 dateList = (x.split(" ")[0].split("-")) + (x.split(" ")[1].split(":"))
+    #             if len(dateParsePart) == 1:
+    #                 return dateList[dateDic[dateParsePart]]
+    #             return '_'.join(i for i in dateList[dateDic[dateParsePart[0]]:dateDic[dateParsePart[-1]]+1])
+    #         except:
+    #             return 'NULL'
 
-        def dateParse(colName):
-            df[colName] = df.apply(lambda x : dateChange(str(x[colName])), axis=1)
+    #     def dateParse(colName):
+    #         df[colName] = df.apply(lambda x : dateChange(str(x[colName])), axis=1)
 
-        try:
-            for colName in dateParseList:
-                try:
-                    dateParse(colName)
-                except:
-                    print('!! ' + colName + '-컬럼 파싱 실패..')
-            print('완료')
-        except:
-            print('!! 날짜 컬럼 파싱 실패')
+    #     try:
+    #         for colName in dateParseList:
+    #             try:
+    #                 dateParse(colName)
+    #             except:
+    #                 print('!! ' + colName + '-컬럼 파싱 실패..')
+    #         print('완료')
+    #     except:
+    #         print('!! 날짜 컬럼 파싱 실패')
 
         # 삭제할 컬럼 
         if len(dropColumnList) > 0:
