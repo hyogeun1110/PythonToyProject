@@ -96,25 +96,25 @@ for originFileName in files:
     if len(ResidentRegistrationNumberList) > 0 :
         print('\n주민등록번호 파싱중.....')
 
-    def checkHipen(x):
-        if '-' in x:
-            result = x
-        else :
-            result = x[:6] + '-' + x[6:]
-        return result
+        def checkHipen(x):
+            if '-' in x:
+                result = x
+            else :
+                result = x[:6] + '-' + x[6:]
+            return result
 
-    def RRnumParse(colName) :
-        df[colName] = df.apply(lambda x : checkHipen(str(x[colName])), axis=1)
+        def RRnumParse(colName) :
+            df[colName] = df.apply(lambda x : checkHipen(str(x[colName])), axis=1)
 
-    try:
-        for colName in ResidentRegistrationNumberList:
-            try:
-                RRnumParse(colName)
-            except:
-                print('!! '+colName+'-컬럼 파싱 실패..')    
-        print('완료')
-    except:
-        print('!! 주민등록번호 파싱 실패')
+        try:
+            for colName in ResidentRegistrationNumberList:
+                try:
+                    RRnumParse(colName)
+                except:
+                    print('!! '+colName+'-컬럼 파싱 실패..')    
+            print('완료')
+        except:
+            print('!! 주민등록번호 파싱 실패')
     
     # 특수문자, 공백이 있는 컬럼
     if len(specialCharacterRemoveList) > 0:
@@ -289,52 +289,51 @@ for originFileName in files:
         except:
             print('!! 주소 파싱 실패')
 
-    # TODO: 에러남 다 NULL로 입력됨 (산본 도서관~.csv)
-    # 날짜 컬럼
-    # if len(dateParseList) > 0:
-    #     dateParsePart = input('\n날짜,시간 컬럼에서 표시할 날 또는 시간 : ')
-    #     print('날짜 컬럼 파싱중.....')
-    #     dateDic = {'년':0, '월':1, '일':2, '시':3, '분':4}
-    #     def dateChange(x):
-    #         try:
-    #             if len(x.split(" ")) == 1:
-    #                 dateList = (x.split(" ").split("-")) 
-    #             else :
-    #                 dateList = (x.split(" ")[0].split("-")) + (x.split(" ")[1].split(":"))
-    #             if len(dateParsePart) == 1:
-    #                 return dateList[dateDic[dateParsePart]]
-    #             return '_'.join(i for i in dateList[dateDic[dateParsePart[0]]:dateDic[dateParsePart[-1]]+1])
-    #         except:
-    #             return 'NULL'
+    #날짜 컬럼
+    if len(dateParseList) > 0:
+        dateParsePart = input('\n날짜,시간 컬럼에서 표시할 날 또는 시간 : ')
+        print('날짜 컬럼 파싱중.....')
+        dateDic = {'년':0, '월':1, '일':2, '시':3, '분':4}
+        def dateChange(x):
+            try:
+                if len(x.split(" ")) == 1:
+                    dateList = (x.split(" ")[0].split("-")) 
+                else :
+                    dateList = (x.split(" ")[0].split("-")) + (x.split(" ")[1].split(":"))
+                if len(dateParsePart) == 1:
+                    return dateList[dateDic[dateParsePart]]
+                return '_'.join(i for i in dateList[dateDic[dateParsePart[0]]:dateDic[dateParsePart[-1]]+1])
+            except:
+                return 'NULL'
 
-    #     def dateParse(colName):
-    #         df[colName] = df.apply(lambda x : dateChange(str(x[colName])), axis=1)
+        def dateParse(colName):
+            df[colName] = df.apply(lambda x : dateChange(str(x[colName])), axis=1)
 
-    #     try:
-    #         for colName in dateParseList:
-    #             try:
-    #                 dateParse(colName)
-    #             except:
-    #                 print('!! ' + colName + '-컬럼 파싱 실패..')
-    #         print('완료')
-    #     except:
-    #         print('!! 날짜 컬럼 파싱 실패')
+        try:
+            for colName in dateParseList:
+                try:
+                    dateParse(colName)
+                except:
+                    print('!! ' + colName + '-컬럼 파싱 실패..')
+            print('완료')
+        except:
+            print('!! 날짜 컬럼 파싱 실패')
 
         # 삭제할 컬럼 
         if len(dropColumnList) > 0:
             print('\n필요없는 컬럼 삭제중.....')
-        def dropColumn(colName):
-            df.drop([colName],axis=1, inplace=True)
+            def dropColumn(colName):
+                df.drop([colName],axis=1, inplace=True)
 
-        try:
-            for colName in dropColumnList:
-                try:
-                    dropColumn(colName)
-                except:
-                    print('!! ' + colName + '-컬럼 삭제 실패..')
-            print('완료')
-        except:
-            print('!! 컬럼 삭제 실패')
+            try:
+                for colName in dropColumnList:
+                    try:
+                        dropColumn(colName)
+                    except:
+                        print('!! ' + colName + '-컬럼 삭제 실패..')
+                print('완료')
+            except:
+                print('!! 컬럼 삭제 실패')
         
 
 
