@@ -1,0 +1,7 @@
+# parser 
+parse/__pycache__/
+parse/build/
+parse/data_parser.spec
+
+# csv_to_db
+db_insert/build/
