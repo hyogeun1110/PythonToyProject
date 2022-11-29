@@ -5,3 +5,6 @@ parse/data_parser.spec
 
 # csv_to_db
 db_insert/build/
+
+# csv file
+*.csv
