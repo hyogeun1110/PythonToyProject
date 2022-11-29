@@ -69,7 +69,7 @@ for originFileName in files:
                 df.rename(columns={originColName:chColName}, inplace=True)
     colunms = list(df.columns)
 
-    # 파서 리스트
+    # 파서 진행할 컬럼 리스트
     # 주민등록번호 컬럼
     ResidentRegistrationNumberList = list(InputAndcheckColName('주민등록번호 컬럼'))
     # 특수문자, 공백처리가 필요한 컬럼
@@ -81,13 +81,12 @@ for originFileName in files:
     # 이름을 성 + '씨' 로 바꿀 컬럼
     fullNameToSurnameList = list(InputAndcheckColName('이름 컬럼'))
     # 전화번호 컬럼
-    phoneNumberParserList = list(InputAndcheckColName('전화번호 컬럼 ex)010~'))
+    phoneNumberParserList = list(InputAndcheckColName('전화번호 컬럼'))
     # 주소를 원하는 행정구역까지 바꿀 주소 컬럼
     addressParseList = list(InputAndcheckColName('주소 컬럼'))
     # 삭제할 컬럼
     dropColumnList = list(InputAndcheckColName('삭제할 컬럼'))
 
-# TODO : 컬럼 입력안했는데 완료 라고 출력댐
 
 # 파서 코드
 # 파서 추가할시 코딩 해야할것 - 컬럼이름 받은 리스트 , 파서 코드
@@ -150,7 +149,7 @@ for originFileName in files:
 
     # 특정문자 기준으로 나눔
     if len(splitCharList) > 0:
-        splitStandard = input('해당기준을 정할 특수문자 또는 공백을 입력 : ')
+        splitStandard = input('해당기준을 정할 특수문자 또는 공백(space bar)을 입력 : ')
         splitCount = int(input('나눈 문자열의 N번째 까지 사용(min=1), N 입력 :'))
         print('\n특정기준으로 나누기 파싱중.....')
 
@@ -179,28 +178,41 @@ for originFileName in files:
     # 이름 컬럼
     if len(fullNameToSurnameList) > 0:
         print('\n이름 컬럼 파싱중.....')
+        # 이름 파싱 함수
         def check_name(fullName) :
-            name = fullName.split(" ")[0]
-            # 성이 두글자 이상인데
-            if len(name) == 2 :
-                # 두글자 성씨인 경우
-                if name == '남궁' or name == '황보' or name == '제갈' or name == '선우' or name == '사공' or name == '서문' or name == '독고' :
-                    return name
-                # 외자 이름인데 붙어있는 이름
-                elif len(fullName.split(" ")) == 1:
-                    return name[0]          
-                # 성이 뒤로 갔을경우
+            try:
+                name = fullName.split(' ')[0]
+                if nameParserType == 1 and " " in fullName:
+                    name = fullName.split(' ')[1]
+
+                # 스플릿한게 두글자인데
+                if len(name) == 2 :
+                    # 두글자 성씨인 경우
+                    if name == '남궁' or name == '황보' or name == '제갈' or name == '선우' or name == '사공' or name == '서문' or name == '독고' :
+                        return name
+                    # 외자 이름인데 붙어있는 이름
+                    elif len(fullName.split(" ")) == 1:
+                        return name[nameParserType]          
+                    # 이름위치 특징의 반대로 갔을경우(띄어쓰기가 된경우만)
+                    else :
+                        return fullName.split(" ")[int(not(nameParserType))]
+                # 이름이 두번 쓰인 경우 or 붙어있는 이름 ex)홍길동 홍길동 or 홍길동
+                elif len(name) == 3 :
+                    indexNum = 0
+                    if nameParserType == 1:
+                        indexNum += 2
+                    return name[indexNum]
+                #  두글자 성 인 사람의 이름이 띄어쓰기가 없는경우
+                elif len(name) >= 4 :
+                    if nameParserType == 0:
+                        return name[:2]
+                    elif nameParserType == 1:
+                        return name[2:]
+                # 다 해당되지 않음
                 else :
-                    return fullName.split(" ")[1]
-            # 이름이 두번 쓰인 경우 or 붙어있는 이름 ex)홍길동 홍길동 or 홍길동
-            elif len(name) == 3 :
-                return name[0]
-            #  두글자 성 인 사람의 이름이 띄어쓰기가 없는경우
-            elif len(name) >= 4 :
-                return name[:2]
-            # 다 해당되지 않음
-            else :
-                return name
+                    return name
+            except :
+                return 'NULL'
 
         def fullNameToSurname(colName) :
             df[colName] = df.apply(lambda x : check_name(str(x[colName])) + '씨', axis=1)
@@ -208,6 +220,7 @@ for originFileName in files:
         try:
             for colName in fullNameToSurnameList:
                 try:
+                    nameParserType = int(input(colName + ' 컬럼의 특징(0-성+이름  1-이름+성) : '))
                     fullNameToSurname(colName)
                 except:
                     print('!! ' + colName + '-컬럼 파싱 실패..')
@@ -235,10 +248,11 @@ for originFileName in files:
             
         def ChangeNum(x):
             try:
-                if x[:2] != '82':
-                    return x[:3] + '-' + x[3:7] + '-' + x[7:11]
-                else :
-                    return '0' + x[2:4] + '-' + x[4:8] + '-' + x[8:12]
+                if x[:2] == '82':
+                    x = '0' + x[2:]
+                elif x[:2] == '10' :
+                    x = '0' + x
+                return x[:3] + '-' + x[3:7] + '-' + x[7:11]
             except:
                 return 'NULL'
 
@@ -262,7 +276,10 @@ for originFileName in files:
         def changeAddress(x):
             try: 
                 addressList = x.split(" ")
-                addressList[0] = addressList[0][:2]
+                if len(addressList[0]) == 4 and (addressList[0][2] == '남' or addressList[0][2] == '북') :
+                    addressList[0] = addressList[0][0] + addressList[0][2]
+                else :
+                    addressList[0] = addressList[0][:2]
                 result = '_'.join(i for i in addressList[:addressParsePart])
                 if addressParsePart == 3 and (result[-1] != '구'):
                     result = '_'.join(i for i in addressList[:addressParsePart-1])
@@ -335,7 +352,6 @@ for originFileName in files:
             except:
                 print('!! 컬럼 삭제 실패')
         
-
 
     # parser 완료후 다시 csv로 저장
     resultFileName = originFileName[:-4] + '_parse.csv'  
