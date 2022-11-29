@@ -2,6 +2,7 @@ import pandas as pd
 import re
 import os
 import time
+import parser_function as PF 
 
 # 데이터 불러오고 컬럼이름 입력받는 코드
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -101,13 +102,10 @@ for originFileName in files:
                 result = x[:6] + '-' + x[6:]
             return result
 
-        def RRnumParse(colName) :
-            df[colName] = df.apply(lambda x : checkHipen(str(x[colName])), axis=1)
-
         try:
             for colName in ResidentRegistrationNumberList:
                 try:
-                    RRnumParse(colName)
+                    df[colName] = df.apply(lambda x : checkHipen(str(x[colName])), axis=1)
                 except:
                     print('!! '+colName+'-컬럼 파싱 실패..')    
             print('완료')
@@ -161,13 +159,10 @@ for originFileName in files:
             except:
                 return 'NULL'
 
-        def splitCharcter(colName) :
-                df[colName] = df.apply(lambda x : checkChar(str(x[colName])), axis=1)
-
         try:
             for colName in splitCharList:
                 try:
-                    splitCharcter(colName)
+                    df[colName] = df.apply(lambda x : checkChar(str(x[colName])), axis=1)
                 except:
                     print('!! ' + colName + '-컬럼 파싱 실패..')
             print("완료")
@@ -213,14 +208,11 @@ for originFileName in files:
             except :
                 return 'NULL'
 
-        def fullNameToSurname(colName) :
-            df[colName] = df.apply(lambda x : check_name(str(x[colName])) + '씨', axis=1)
-
         try:
             for colName in fullNameToSurnameList:
                 try:
                     nameParserType = int(input(colName + ' 컬럼의 특징(0-성+이름  1-이름+성) : '))
-                    fullNameToSurname(colName)
+                    df[colName] = df.apply(lambda x : check_name(str(x[colName])) + '씨', axis=1)
                 except:
                     print('!! ' + colName + '-컬럼 파싱 실패..')
             print("완료")
@@ -255,13 +247,10 @@ for originFileName in files:
             except:
                 return 'NULL'
 
-        def phoneNumberParser(colName):
-            df[colName] = df.apply(lambda x : check_num(str(x[colName])), axis=1)
-
         try:
             for colName in phoneNumberParserList:
                 try:
-                    phoneNumberParser(colName)
+                    df[colName] = df.apply(lambda x : check_num(str(x[colName])), axis=1)
                 except :
                     print('!! ' + colName + '-컬럼 파싱 실패..')
             print('완료')
@@ -292,13 +281,10 @@ for originFileName in files:
             except :
                 return 'NULL'
 
-        def addressParse(colName):
-            df[colName] = df.apply(lambda x : changeAddress(x[colName]), axis=1)
-
         try:
             for colName in addressParseList:
                 try:
-                    addressParse(colName)
+                    df[colName] = df.apply(lambda x : changeAddress(x[colName]), axis=1)
                 except:
                     print('!!' + colName + '-컬럼 파싱 실패..')
             print('완료')
@@ -322,13 +308,10 @@ for originFileName in files:
             except:
                 return 'NULL'
 
-        def dateParse(colName):
-            df[colName] = df.apply(lambda x : dateChange(str(x[colName])), axis=1)
-
         try:
             for colName in dateParseList:
                 try:
-                    dateParse(colName)
+                    df[colName] = df.apply(lambda x : dateChange(str(x[colName])), axis=1)
                 except:
                     print('!! ' + colName + '-컬럼 파싱 실패..')
             print('완료')
@@ -338,13 +321,11 @@ for originFileName in files:
         # 삭제할 컬럼 
         if len(dropColumnList) > 0:
             print('\n필요없는 컬럼 삭제중.....')
-            def dropColumn(colName):
-                df.drop([colName],axis=1, inplace=True)
-
+            
             try:
                 for colName in dropColumnList:
                     try:
-                        dropColumn(colName)
+                        df.drop([colName],axis=1, inplace=True)
                     except:
                         print('!! ' + colName + '-컬럼 삭제 실패..')
                 print('완료')
