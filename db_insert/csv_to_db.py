@@ -6,7 +6,7 @@ import getpass
 import time
 
 # conn db
-intoMyDB= input('hyogeun의 test DB에 넣기(y/n) : ')
+intoMyDB= input('나의 test DB에 넣기(y/n) : ')
 if intoMyDB == 'y':
     host = 'localhost'
     user = 'root'
