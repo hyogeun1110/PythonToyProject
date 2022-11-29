@@ -2,7 +2,6 @@ import pandas as pd
 import re
 import os
 import time
-import parser_function as PF 
 
 # 데이터 불러오고 컬럼이름 입력받는 코드
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -321,7 +320,7 @@ for originFileName in files:
         # 삭제할 컬럼 
         if len(dropColumnList) > 0:
             print('\n필요없는 컬럼 삭제중.....')
-            
+
             try:
                 for colName in dropColumnList:
                     try:
